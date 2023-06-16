@@ -1,0 +1,78 @@
+BRIEF 14
+
+
+Creation d'une vm, cloner la repo de Git pour avoir le Dokerfile et app_py
+
+
+script docker :
+
+
+#!/bin/bash
+
+#Installing Docker
+
+sudo apt update&&sudo apt upgrade -y
+curl -fsSL https://get.docker.com/ -o install-docker.sh
+sh install_docker.sh --dry-run
+sudo sh install-docker.sh
+
+
+#Creating container
+
+sudo docker build -t img_app_py .
+sudo docker run --name cont_appy_py_lylla -p 1234:1234 -d img_app_py
+sudo docker tag img_app_py:latest lyllabani/img_app_py:latest
+sudo docker login -u lyllabani -p dckr_pat_BPdule2UQ-Mif_zdZGq6E5R24EA
+sudo docker push lyllabani/img_app_py:latest
+
+
+pour lancer le script : bash init-script.sh
+
+TEST SCRIPT OK!
+
+TERRAFORM :
+
+pour supprimer un repertoire : rm -r azure-webserver/
+
+git clone https://github.com/lylla834/brief14.git
+pour recuperer les repertoires brief14
+terraform version
+terraform init
+terraform plan
+terraform apply -auto-approve
+terraform destroy
+#to update the infra
+terraform apply -refresh-only -auto-approve
+
+
+CREATION JENKINSFILE
+
+pipeline {
+    agent any
+    tools {
+        terraform 'terraform'
+    }
+    stages {
+        stage('recup') {            steps{          checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/lylla834/brief14']])}}
+        stage('terraform init') {
+            steps{
+		    dir('webserver_py'){
+               	        sh 'terraform init'
+                        echo 'terraform init succeed'}
+	    }}
+        stage('terraform plan') {      	
+            steps{
+		    dir('webserver_py'){
+               	        sh 'terraform plan'
+                        echo 'terraform plan succeed'}
+	    }}
+		stage('terraform apply') {         
+            steps{
+		    dir('webserver_py'){
+               	       sh 'terraform apply --auto-approve'
+                        echo 'terraform apply succeed'}
+	    }}
+        
+      }
+    }
+
